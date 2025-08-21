@@ -5,7 +5,26 @@ import { useEffect } from 'react';
 
 export default function Home() {
   useEffect(() => {
-    fetch('/api/log-ip')
+    // Get user's real IP from external service first
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(ipData => {
+        // Then send the real IP to our logging API
+        return fetch('/api/log-ip', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            userIp: ipData.ip,
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            screenResolution: `${screen.width}x${screen.height}`,
+            colorDepth: screen.colorDepth
+          })
+        });
+      })
       .then(response => response.json())
       .then(data => {
         console.log('IP logged:', data);

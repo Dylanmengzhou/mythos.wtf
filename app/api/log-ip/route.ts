@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  const ip = forwarded?.split(',')[0] || realIp || 'unknown';
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const ip = body.userIp;
   
   let locationData = null;
   let physicalAddress = null;
@@ -47,7 +47,11 @@ export async function GET(request: NextRequest) {
   
   const logData = {
     ip: ip,
-    userAgent: request.headers.get('user-agent'),
+    userAgent: body.userAgent,
+    language: body.language,
+    timezone: body.timezone,
+    screenResolution: body.screenResolution,
+    colorDepth: body.colorDepth,
     timestamp: new Date().toISOString(),
     referer: request.headers.get('referer'),
     location: locationData,
@@ -56,8 +60,12 @@ export async function GET(request: NextRequest) {
   
   // Enhanced logging
   console.log('=== VISITOR ACCESS LOG ===');
-  console.log('IP Address:', ip);
-  console.log('User Agent:', request.headers.get('user-agent'));
+  console.log('Real IP Address:', ip);
+  console.log('User Agent:', body.userAgent);
+  console.log('Language:', body.language);
+  console.log('Timezone:', body.timezone);
+  console.log('Screen Resolution:', body.screenResolution);
+  console.log('Color Depth:', body.colorDepth);
   console.log('Timestamp:', new Date().toISOString());
   console.log('Referer:', request.headers.get('referer'));
   
@@ -93,4 +101,12 @@ export async function GET(request: NextRequest) {
     success: true, 
     data: logData
   });
+  
+  } catch (error) {
+    console.error('Error in log-ip API:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to log IP'
+    }, { status: 500 });
+  }
 }
